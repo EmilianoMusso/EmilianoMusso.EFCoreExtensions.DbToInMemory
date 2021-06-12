@@ -1,12 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>Emiliano Musso</Authors>
     <Company>Emiliano Musso</Company>
-    <Description>A convenient extension for EFCore (currently 5.0.7) to load persisted data from database to InMemory</Description>
+    <Description>A convenient extension for EFCore to load persisted data from database to InMemory</Description>
     <PackageTags>ef, entity framework, inmemory, data, efcore</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/EmilianoMusso/EmilianoMusso.EFCoreExtensions.DbToInMemory/</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
