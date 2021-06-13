@@ -23,48 +23,55 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
                  .Append("FROM ")
                  .AppendLine(fullTableName);
 
+            // ---------------------------------------------------------------------------
+            // EXPERIMENTAL: The following code must be revised, refactored, and completed
+            // to manage a full expression parsing
+            // ---------------------------------------------------------------------------
             if (filter != null)
             {
-                query.Append("WHERE ");
-
                 var body = filter.Body as BinaryExpression;
                 var left = body.Left as MemberExpression;
                 var right = body.Right as ConstantExpression;
 
-                query.Append(left.Member.Name);
-                switch (body.NodeType)
+                if (left != null && right != null)
                 {
-                    case ExpressionType.Equal:
-                        query.Append("=");
-                        break;
+                    query.Append("WHERE ");
 
-                    case ExpressionType.GreaterThan:
-                        query.Append(">");
-                        break;
+                    query.Append(left.Member.Name);
+                    switch (body.NodeType)
+                    {
+                        case ExpressionType.Equal:
+                            query.Append("=");
+                            break;
 
-                    case ExpressionType.GreaterThanOrEqual:
-                        query.Append(">=");
-                        break;
+                        case ExpressionType.GreaterThan:
+                            query.Append(">");
+                            break;
 
-                    case ExpressionType.LessThan:
-                        query.Append("<");
-                        break;
+                        case ExpressionType.GreaterThanOrEqual:
+                            query.Append(">=");
+                            break;
 
-                    case ExpressionType.LessThanOrEqual:
-                        query.Append("<=");
-                        break;
+                        case ExpressionType.LessThan:
+                            query.Append("<");
+                            break;
 
-                    case ExpressionType.NotEqual:
-                        query.Append("<>");
-                        break;
+                        case ExpressionType.LessThanOrEqual:
+                            query.Append("<=");
+                            break;
+
+                        case ExpressionType.NotEqual:
+                            query.Append("<>");
+                            break;
+                    }
+
+                    var constValue = right.Value;
+                    if (right.Type == typeof(string) || right.Type == typeof(DateTime))
+                    {
+                        constValue = $"'{constValue}'";
+                    }
+                    query.AppendLine(constValue.ToString());
                 }
-
-                var constValue = right.Value;
-                if (right.Type == typeof(string) || right.Type == typeof(DateTime))
-                {
-                    constValue = $"'{constValue}'";
-                }
-                query.AppendLine(constValue.ToString());
             }
 
             if (options.HasRandomOrder) query.AppendLine("ORDER BY NEWID()");
