@@ -24,54 +24,31 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
                  .AppendLine(fullTableName);
 
             // ---------------------------------------------------------------------------
-            // EXPERIMENTAL: The following code must be revised, refactored, and completed
-            // to manage a full expression parsing
+            // EXPERIMENTAL: The following code tries to manage a full expression parsing
+            // by substituting (work in progress)
             // ---------------------------------------------------------------------------
             if (filter != null)
             {
-                var body = filter.Body as BinaryExpression;
-                var left = body.Left as MemberExpression;
-                var right = body.Right as ConstantExpression;
+                var separators = new char[] { ' ', '(', ')' };
+                var linqExprSegments = filter.ToString().Split(separators);
 
-                if (left != null && right != null)
+                var whereClause = "WHERE ";
+                for (int i=4; i<linqExprSegments.Length; i++)
                 {
-                    query.Append("WHERE ");
+                    linqExprSegments[i] = linqExprSegments[i].Replace("\\", "")
+                                                             .Replace("\"", "'")
+                                                             .Replace(".Contains", " LIKE")
+                                                             .Replace(".StartsWith", " LIKE")
+                                                             .Replace(".EndsWith", " LIKE")
+                                                             .Replace(linqExprSegments[0] + ".", "");
 
-                    query.Append(left.Member.Name);
-                    switch (body.NodeType)
-                    {
-                        case ExpressionType.Equal:
-                            query.Append("=");
-                            break;
+                    if (linqExprSegments[i].CompareTo("AndAlso") == 0) linqExprSegments[i] = "AND";
+                    if (linqExprSegments[i].CompareTo("OrAlso") == 0) linqExprSegments[i] = "OR";
 
-                        case ExpressionType.GreaterThan:
-                            query.Append(">");
-                            break;
-
-                        case ExpressionType.GreaterThanOrEqual:
-                            query.Append(">=");
-                            break;
-
-                        case ExpressionType.LessThan:
-                            query.Append("<");
-                            break;
-
-                        case ExpressionType.LessThanOrEqual:
-                            query.Append("<=");
-                            break;
-
-                        case ExpressionType.NotEqual:
-                            query.Append("<>");
-                            break;
-                    }
-
-                    var constValue = right.Value;
-                    if (right.Type == typeof(string) || right.Type == typeof(DateTime))
-                    {
-                        constValue = $"'{constValue}'";
-                    }
-                    query.AppendLine(constValue.ToString());
+                    whereClause += $"{linqExprSegments[i]} ";
                 }
+
+                query.AppendLine(whereClause);
             }
 
             if (options.HasRandomOrder) query.AppendLine("ORDER BY NEWID()");
