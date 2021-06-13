@@ -37,13 +37,14 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
                 {
                     linqExprSegments[i] = linqExprSegments[i].Replace("\\", "")
                                                              .Replace("\"", "'")
+                                                             .Replace("==", "=")
                                                              .Replace(".Contains", " LIKE")
                                                              .Replace(".StartsWith", " LIKE")
                                                              .Replace(".EndsWith", " LIKE")
                                                              .Replace(linqExprSegments[0] + ".", "");
 
                     if (linqExprSegments[i].CompareTo("AndAlso") == 0) linqExprSegments[i] = "AND";
-                    if (linqExprSegments[i].CompareTo("OrAlso") == 0) linqExprSegments[i] = "OR";
+                    if (linqExprSegments[i].CompareTo("OrElse") == 0) linqExprSegments[i] = "OR";
 
                     whereClause += $"{linqExprSegments[i]} ";
                 }
