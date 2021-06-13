@@ -1,27 +1,73 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
 {
     public static class DatabaseToInMemoryExtensions
     {
-        private static string GetSelectQuery<T>(DbContext context, string tableName, int topRecords, bool randomOrder) where T : class
+        private static string GetSelectQuery<T>(DatabaseToInMemoryOptions options, Expression<Func<T, bool>> filter) where T : class
         {
-            var mapping = context.Model.FindEntityType(tableName);
+            var mapping = options.Context.Model.FindEntityType(options.TableName);
             var fullTableName = mapping.GetSchemaQualifiedTableName();
 
             var query = new StringBuilder("SELECT")
                 .AppendLine();
 
-            if (topRecords > 0) query.AppendLine($"TOP({topRecords})");
+            if (options.TopRecords > 0) query.AppendLine($"TOP({options.TopRecords})");
 
             query.AppendLine(string.Join(", ", mapping.GetProperties().Select(x => x.Name)))
                  .Append("FROM ")
                  .AppendLine(fullTableName);
 
-            if (randomOrder) query.AppendLine("ORDER BY NEWID()");
+            if (filter != null)
+            {
+                query.Append("WHERE ");
+
+                var body = filter.Body as BinaryExpression;
+                var left = body.Left as MemberExpression;
+                var right = body.Right as ConstantExpression;
+
+                query.Append(left.Member.Name);
+                switch (body.NodeType)
+                {
+                    case ExpressionType.Equal:
+                        query.Append("=");
+                        break;
+
+                    case ExpressionType.GreaterThan:
+                        query.Append(">");
+                        break;
+
+                    case ExpressionType.GreaterThanOrEqual:
+                        query.Append(">=");
+                        break;
+
+                    case ExpressionType.LessThan:
+                        query.Append("<");
+                        break;
+
+                    case ExpressionType.LessThanOrEqual:
+                        query.Append("<=");
+                        break;
+
+                    case ExpressionType.NotEqual:
+                        query.Append("<>");
+                        break;
+                }
+
+                var constValue = right.Value;
+                if (right.Type == typeof(string) || right.Type == typeof(DateTime))
+                {
+                    constValue = $"'{constValue}'";
+                }
+                query.AppendLine(constValue.ToString());
+            }
+
+            if (options.HasRandomOrder) query.AppendLine("ORDER BY NEWID()");
                 
             return query.ToString();
         }
@@ -41,12 +87,22 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
             return obj;
         }
 
-        public static void LoadTableExt<T>(this DbContext context, string connectionString, int topRecords, bool randomOrder) where T : class, new()
+        public static void LoadTableExt<T>(this DbContext context, string connectionString, int topRecords, bool randomOrder, Expression<Func<T, bool>> filter) where T : class, new()
         {
-            using (var connection = new SqlConnection(connectionString))
+            var options = new DatabaseToInMemoryOptions()
+            {
+                ConnectionString = connectionString,
+                Context = context,
+                TableName = typeof(T).ToString(),
+                TopRecords = topRecords,
+                HasRandomOrder = randomOrder
+            };
+
+            using (var connection = new SqlConnection(options.ConnectionString))
             {
                 connection.Open();
-                var query = GetSelectQuery<T>(context, typeof(T).ToString(), topRecords, randomOrder);
+
+                var query = GetSelectQuery<T>(options, filter);
                 var sqlCmd = new SqlCommand(query, connection);
 
                 var dr = sqlCmd.ExecuteReader();
