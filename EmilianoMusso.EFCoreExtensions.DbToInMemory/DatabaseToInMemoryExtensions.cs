@@ -52,6 +52,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
                 linqExprSegments[i] = linqExprSegments[i].Replace("\\", "")
                                                          .Replace("\"", "'")
                                                          .Replace("==", "=")
+                                                         .Replace("!=", "<>")
                                                          .Replace(linqExprSegments[0] + ".", "");
 
                 if (linqExprSegments[i].CompareTo("AndAlso") == 0) linqExprSegments[i] = "AND";
