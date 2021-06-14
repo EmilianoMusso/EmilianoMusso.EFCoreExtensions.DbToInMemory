@@ -23,38 +23,70 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
                  .Append("FROM ")
                  .AppendLine(fullTableName);
 
-            // ---------------------------------------------------------------------------
-            // EXPERIMENTAL: The following code tries to manage a full expression parsing
-            // by substituting (work in progress)
-            // ---------------------------------------------------------------------------
             if (filter != null)
             {
-                var separators = new char[] { ' ', '(', ')' };
-                var linqExprSegments = filter.ToString().Split(separators);
-
-                var whereClause = "WHERE ";
-                for (int i=4; i<linqExprSegments.Length; i++)
-                {
-                    linqExprSegments[i] = linqExprSegments[i].Replace("\\", "")
-                                                             .Replace("\"", "'")
-                                                             .Replace("==", "=")
-                                                             .Replace(".Contains", " LIKE")
-                                                             .Replace(".StartsWith", " LIKE")
-                                                             .Replace(".EndsWith", " LIKE")
-                                                             .Replace(linqExprSegments[0] + ".", "");
-
-                    if (linqExprSegments[i].CompareTo("AndAlso") == 0) linqExprSegments[i] = "AND";
-                    if (linqExprSegments[i].CompareTo("OrElse") == 0) linqExprSegments[i] = "OR";
-
-                    whereClause += $"{linqExprSegments[i]} ";
-                }
-
+                var whereClause = GetWhereClause(filter.ToString());
                 query.AppendLine(whereClause);
             }
 
             if (options.HasRandomOrder) query.AppendLine("ORDER BY NEWID()");
                 
             return query.ToString();
+        }
+
+
+        /// <summary>
+        /// EXPERIMENTAL: A method which, given a string that represent a full LINQ Expression, converts it to SQL language,
+        /// thus avoiding expression-tree traversing
+        /// </summary>
+        /// <param name="linqWhereExpression"></param>
+        /// <returns></returns>
+        private static string GetWhereClause(string linqWhereExpression)
+        {
+            var separators = new char[] { ' ', '(', ')' };
+            var linqExprSegments = linqWhereExpression.ToString().Split(separators);
+
+            var whereClause = "WHERE ";
+            for (int i = 2; i < linqExprSegments.Length; i++)
+            {
+                linqExprSegments[i] = linqExprSegments[i].Replace("\\", "")
+                                                         .Replace("\"", "'")
+                                                         .Replace("==", "=")
+                                                         .Replace(linqExprSegments[0] + ".", "");
+
+                if (linqExprSegments[i].CompareTo("AndAlso") == 0) linqExprSegments[i] = "AND";
+                if (linqExprSegments[i].CompareTo("OrElse") == 0) linqExprSegments[i] = "OR";
+
+                var hasQuoteAt = linqExprSegments[i].IndexOf("'");
+                if (linqExprSegments[i - 1].Contains(".Contains"))
+                {
+                    if (hasQuoteAt > -1)
+                    {
+                        linqExprSegments[i] = linqExprSegments[i].First() + "%" + linqExprSegments[i].Substring(1, linqExprSegments[i].Length - 2) + "%'";
+                    }
+                }
+                else if (linqExprSegments[i - 1].Contains(".StartsWith"))
+                {
+                    if (hasQuoteAt > -1)
+                    {
+                        linqExprSegments[i] = linqExprSegments[i].Substring(0, linqExprSegments[i].Length - 1) + "%'";
+                    }
+                }
+                else if (linqExprSegments[i - 1].Contains(".EndsWith"))
+                {
+                    if (hasQuoteAt > -1)
+                    {
+                        linqExprSegments[i] = linqExprSegments[i].First() + "%" + linqExprSegments[i].Substring(1, linqExprSegments[i].Length);
+                    }
+                }
+
+                linqExprSegments[i - 1] = linqExprSegments[i - 1].Replace(".Contains", " LIKE")
+                                                                 .Replace(".StartsWith", " LIKE")
+                                                                 .Replace(".EndsWith", " LIKE");
+            }
+
+            whereClause += string.Join(" ", linqExprSegments.Where((x, i) => i >= 2).ToArray());
+            return whereClause;
         }
 
         private static T CreateObject<T>(SqlDataReader dr) where T : class, new()
