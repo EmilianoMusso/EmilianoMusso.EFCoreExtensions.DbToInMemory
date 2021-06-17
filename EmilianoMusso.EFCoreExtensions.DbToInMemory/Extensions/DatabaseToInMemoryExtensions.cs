@@ -20,7 +20,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
 
             if (options.TopRecords > 0) query.AppendLine($"TOP({options.TopRecords})");
 
-            query.AppendLine(string.Join(", ", mapping.GetProperties().Select(x => x.Name)))
+            query.AppendLine(string.Join(", ", mapping.GetProperties().Select(x => $"[{x.Name}]")))
                  .Append("FROM ")
                  .AppendLine(fullTableName);
 
@@ -61,22 +61,32 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
                 HasRandomOrder = randomOrder
             };
 
-            using (var connection = new SqlConnection(options.ConnectionString))
+            var query = GetSelectQuery(options, filter);
+
+            try
             {
-                connection.Open();
-
-                var query = GetSelectQuery(options, filter);
-                var sqlCmd = new SqlCommand(query, connection);
-
-                var dr = sqlCmd.ExecuteReader();
-                if (dr.HasRows)
+                using (var connection = new SqlConnection(options.ConnectionString))
                 {
-                    while (dr.Read())
+                    connection.Open();
+
+                    var sqlCmd = new SqlCommand(query, connection);
+
+                    using (var dr = sqlCmd.ExecuteReader())
                     {
-                        var obj = CreateObject<T>(dr);
-                        context.Set<T>().Add(obj);
+                        if (dr.HasRows)
+                        {
+                            while (dr.Read())
+                            {
+                                var obj = CreateObject<T>(dr);
+                                context.Set<T>().Add(obj);
+                            }
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new LoadDataException(ex.Message, query);
             }
         }
     }

@@ -103,7 +103,9 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
         public static string GetSQLWhereClause(this string linqWhereExpression)
         {
             var separators = new char[] { ' ', '(', ')' };
-            var linqExprSegments = linqWhereExpression.ToString().Split(separators);
+            var linqExprSegments = linqWhereExpression.Split(separators, System.StringSplitOptions.RemoveEmptyEntries);
+
+            if (!linqExprSegments.Any()) return "";
 
             var whereClause = LinqFuncToSqlLangHelper.WhereFunc;
 
@@ -112,19 +114,21 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
                 linqExprSegments[i] = linqExprSegments[i].Replace(linqExprSegments[0] + ".", "")
                                                          .ReplaceOperators();
 
-                if (linqExprSegments[i].Any(x => x == (char)39))
+                if (linqExprSegments[i].Any(x => x == '\''))
                 {
+                    linqExprSegments[i] = linqExprSegments[i].Replace("\'", "");
+
                     if (linqExprSegments[i - 1].Contains(LinqFuncToSqlLangHelper.LinqContains))
                     {
-                        linqExprSegments[i] = linqExprSegments[i].First() + "%" + linqExprSegments[i].Substring(1, linqExprSegments[i].Length - 2) + "%'";
+                        linqExprSegments[i] = $"\'%{linqExprSegments[i]}%\'";
                     }
                     else if (linqExprSegments[i - 1].Contains(LinqFuncToSqlLangHelper.LinqStartsWith))
                     {
-                        linqExprSegments[i] = linqExprSegments[i].Substring(0, linqExprSegments[i].Length - 1) + "%'";
+                        linqExprSegments[i] = $"\'{linqExprSegments[i]}%\'";
                     }
                     else if (linqExprSegments[i - 1].Contains(LinqFuncToSqlLangHelper.LinqEndsWith))
                     {
-                        linqExprSegments[i] = linqExprSegments[i].First() + "%" + linqExprSegments[i].Substring(1, linqExprSegments[i].Length - 1);
+                        linqExprSegments[i] = $"\'%{linqExprSegments[i]}\'";
                     }
                 }
 
