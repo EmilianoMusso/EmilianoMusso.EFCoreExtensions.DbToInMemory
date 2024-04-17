@@ -29,46 +29,36 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
         public const string SqlEqual = "=";
         public const string SqlNotEqual = "<>";
 
-        private static Dictionary<string, string> Keywords
+        private static readonly Dictionary<string, string> keyDictionary = new()
         {
-            get
-            {
-                var keyDictionary = new Dictionary<string, string>();
+            [LinqAndAlso] = SqlAnd,
+            [LinqOrElse] = SqlOr,
+            [LinqContains] = SqlLike,
+            [LinqStartsWith] = SqlLike,
+            [LinqEndsWith] = SqlLike
+        };
 
-                keyDictionary.Add(LinqAndAlso, SqlAnd);
-                keyDictionary.Add(LinqOrElse, SqlOr);
-                keyDictionary.Add(LinqContains, SqlLike);
-                keyDictionary.Add(LinqStartsWith, SqlLike);
-                keyDictionary.Add(LinqEndsWith, SqlLike);
-
-                return keyDictionary;
-            }
-        }
-
-        private static Dictionary<string, string> Operators
+        private static readonly Dictionary<string, string> opDictionary = new()
         {
-            get
-            {
-                var opDictionary = new Dictionary<string, string>();
+            [LinqSlash] = SqlSlash,
+            [LinqQuote] = SqlQuote,
+            [LinqEqual] = SqlEqual,
+            [LinqNotEqual] = SqlNotEqual
+        };
 
-                opDictionary.Add(LinqSlash, SqlSlash);
-                opDictionary.Add(LinqQuote, SqlQuote);
-                opDictionary.Add(LinqEqual, SqlEqual);
-                opDictionary.Add(LinqNotEqual, SqlNotEqual);
+        private static Dictionary<string, string> Keywords => keyDictionary;
 
-                return opDictionary;
-            }
-        }
+        private static Dictionary<string, string> Operators => opDictionary;
 
         public static string GetKeyword(string key)
         {
-            Keywords.TryGetValue(key, out string sqlFunc);
+            Keywords.TryGetValue(key, out var sqlFunc);
             return sqlFunc;
         }
 
         public static string GetOperator(string key)
         {
-            Operators.TryGetValue(key, out string sqlOperator);
+            Operators.TryGetValue(key, out var sqlOperator);
             return sqlOperator;
         }
 
@@ -105,11 +95,14 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
             var separators = new char[] { ' ', '(', ')' };
             var linqExprSegments = linqWhereExpression.Split(separators, System.StringSplitOptions.RemoveEmptyEntries);
 
-            if (!linqExprSegments.Any()) return "";
+            if (linqExprSegments.Length == 0)
+            {
+                return "";
+            }
 
-            var whereClause = LinqFuncToSqlLangHelper.WhereFunc;
+            var whereClause = WhereFunc;
 
-            for (int i = 2; i < linqExprSegments.Length; i++)
+            for (var i = 2; i < linqExprSegments.Length; i++)
             {
                 linqExprSegments[i] = linqExprSegments[i].Replace(linqExprSegments[0] + ".", "")
                                                          .ReplaceOperators();
@@ -118,15 +111,15 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
                 {
                     linqExprSegments[i] = linqExprSegments[i].Replace("\'", "");
 
-                    if (linqExprSegments[i - 1].Contains(LinqFuncToSqlLangHelper.LinqContains))
+                    if (linqExprSegments[i - 1].Contains(LinqContains))
                     {
                         linqExprSegments[i] = $"\'%{linqExprSegments[i]}%\'";
                     }
-                    else if (linqExprSegments[i - 1].Contains(LinqFuncToSqlLangHelper.LinqStartsWith))
+                    else if (linqExprSegments[i - 1].Contains(LinqStartsWith))
                     {
                         linqExprSegments[i] = $"\'{linqExprSegments[i]}%\'";
                     }
-                    else if (linqExprSegments[i - 1].Contains(LinqFuncToSqlLangHelper.LinqEndsWith))
+                    else if (linqExprSegments[i - 1].Contains(LinqEndsWith))
                     {
                         linqExprSegments[i] = $"\'%{linqExprSegments[i]}\'";
                     }
@@ -135,7 +128,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
                 linqExprSegments[i - 1] = linqExprSegments[i - 1].ReplaceKeywords();
             }
 
-            whereClause += string.Join(" ", linqExprSegments.Where((x, i) => i >= 2).ToArray()).Replace("  ", " ");
+            whereClause += string.Join(" ", linqExprSegments.Where((_, i) => i >= 2).ToArray()).Replace("  ", " ");
             return whereClause.Trim();
         }
     }

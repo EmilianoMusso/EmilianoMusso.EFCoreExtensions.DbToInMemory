@@ -5,7 +5,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
 {
     public class LoadDataException : Exception
     {
-        public string ExecutedQuery { get; set; }
+        private string ExecutedQuery { get; set; }
         public LoadDataException() { }
 
         public LoadDataException(string message, string executedQuery) : base(message)
@@ -13,10 +13,17 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
             this.ExecutedQuery = executedQuery;
         }
 
+        public LoadDataException(string message) : base(message)
+        {
+        }
+
+        public LoadDataException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
         public override string ToString()
         {
             var sb = new StringBuilder(this.ToString())
-                .AppendLine("")
                 .AppendLine(this.ExecutedQuery);
 
             return sb.ToString();

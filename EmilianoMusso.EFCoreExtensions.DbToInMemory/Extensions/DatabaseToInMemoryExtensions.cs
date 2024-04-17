@@ -31,7 +31,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
             }
 
             if (options.HasRandomOrder) query.AppendLine("ORDER BY NEWID()");
-                
+
             return query.ToString();
         }
 
@@ -39,9 +39,9 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
         {
             var values = new object[dr.FieldCount - 1];
             dr.GetValues(values);
-            
+
             var obj = new T();
-            for(int i = 0; i < values.Length; i++)
+            for(var i = 0; i < values.Length; i++)
             {
                 var propertyName = dr.GetName(i);
                 obj.GetType().GetProperty(propertyName).SetValue(obj, values[i]);
@@ -65,22 +65,18 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
 
             try
             {
-                using (var connection = new SqlConnection(options.ConnectionString))
+                using var connection = new SqlConnection(options.ConnectionString);
+                connection.Open();
+
+                var sqlCmd = new SqlCommand(query, connection);
+
+                using var dr = sqlCmd.ExecuteReader();
+                if (dr.HasRows)
                 {
-                    connection.Open();
-
-                    var sqlCmd = new SqlCommand(query, connection);
-
-                    using (var dr = sqlCmd.ExecuteReader())
+                    while (dr.Read())
                     {
-                        if (dr.HasRows)
-                        {
-                            while (dr.Read())
-                            {
-                                var obj = CreateObject<T>(dr);
-                                context.Set<T>().Add(obj);
-                            }
-                        }
+                        var obj = CreateObject<T>(dr);
+                        context.Set<T>().Add(obj);
                     }
                 }
             }

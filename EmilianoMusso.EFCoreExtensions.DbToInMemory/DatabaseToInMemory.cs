@@ -15,7 +15,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
         {
             _context = context;
             _connectionString = connectionString;
-            _randomOrder = true;
+            _randomOrder = randomOrder;
         }
 
         public DatabaseToInMemory LoadTable<T>(Expression<Func<T, bool>> filter = null, int topRecords = 10) where T : class, new()
