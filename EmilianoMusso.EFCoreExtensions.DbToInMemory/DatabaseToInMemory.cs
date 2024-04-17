@@ -1,5 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions;
 
 namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
 {
@@ -12,12 +15,12 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
         {
             _context = context;
             _connectionString = connectionString;
-            _randomOrder = true;
+            _randomOrder = randomOrder;
         }
 
-        public DatabaseToInMemory LoadTable<T>(int topRecords = 10) where T : class, new()
+        public DatabaseToInMemory LoadTable<T>(Expression<Func<T, bool>> filter = null, int topRecords = 10) where T : class, new()
         {
-            _context.LoadTableExt<T>(_connectionString, topRecords, _randomOrder);
+            _context.InternalLoadTable(_connectionString, topRecords, _randomOrder, filter);
             return this;
         }
 

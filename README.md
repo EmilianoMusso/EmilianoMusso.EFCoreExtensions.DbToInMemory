@@ -23,8 +23,8 @@ var connectionString = @"Server=.\MyInstance;Database=MyDatabase;Trusted_Connect
 var toInMem = new DatabaseToInMemory(context, connectionString);
 
 toInMem.LoadTable<MyTableType>()
-        .LoadTable<AnotherTableType>(5)
-        .PersistToMemory();
+       .LoadTable<AnotherTableType>(5)
+       .PersistToMemory();
 ```
 
 Here, we have declared an in-memory database modeled on an already existant DbContext.
@@ -35,3 +35,25 @@ Afterwards, we can use the `LoadTable<T>` method, where `<T>` is one of the type
 
 Unless otherwise stated in the `DatabaseToInMemory` constructor, data will be picked randomly from each table.
 At the end of load operations, which can be concatenated, we can call `PersistToMemory` or `PersistToMemoryAsync` - which are two wrappers for `SaveChanges` and `SaveChangesAsync` - to persist our data in the in-memory database.
+
+#### v1.1.0-alpha.1
+From this version on, it is possible to specify an expression to select entities from tables.
+The LINQ expression will be translated to SQL syntax. A sample of this process can be seen in the original repository, on the test project, and can be resumed like the following.
+
+```csharp
+var linqExpression = "x => x.Property01.Contains(\"A\") AndAlso x.Property02 == 1";
+var expectedClause = "WHERE Property01 LIKE '%A%' AND Property02 = 1";
+
+var result = LinqFuncToSqlLangHelper.GetSQLWhereClause(linqExpression);
+result.Should().Be(expectedClause);
+```
+
+LoadTable<T> method could thus be implemented with a selector, like this:
+```csharp
+toInMem.LoadTable<MyTableType>()
+       .LoadTable<AnotherTableType>(x => x.Property01 > 100, topRecords: 5)
+       .LoadTable<ThirdType>(x => x.StringProp.StartsWith("E") && x.TestProperty != 10, topRecords: 5)
+       .PersistToMemory();
+```
+
+Further translation possibilities will come in future versions.
