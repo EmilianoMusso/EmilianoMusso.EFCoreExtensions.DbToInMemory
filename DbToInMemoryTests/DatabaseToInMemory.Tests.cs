@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EFCoreExtensions.DbToInMemory.Tests
+namespace EFCoreExtensions.DbToInMemory.Tests;
+
+internal class DatabaseToInMemoryTests
 {
-    internal class DatabaseToInMemoryTests
-    {
-    }
 }
