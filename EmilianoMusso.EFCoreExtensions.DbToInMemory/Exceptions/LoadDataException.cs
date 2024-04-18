@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace EFCoreExtensions.DbToInMemory
+namespace EFCoreExtensions.DbToInMemory.Exceptions
 {
     public class LoadDataException : Exception
     {
@@ -15,10 +15,12 @@ namespace EFCoreExtensions.DbToInMemory
 
         public LoadDataException(string message) : base(message)
         {
+            ExecutedQuery = "Not specified";
         }
 
         public LoadDataException(string message, Exception innerException) : base(message, innerException)
         {
+            ExecutedQuery = "Not specified";
         }
 
         public override string ToString()

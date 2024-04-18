@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EFCoreExtensions.DbToInMemory.Tests
 {
-    internal class DatabaseToInMemory
+    internal class DatabaseToInMemoryTests
     {
     }
 }

@@ -1,11 +1,11 @@
+using EFCoreExtensions.DbToInMemory.Helpers;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EFCoreExtensions.DbToInMemory.Helpers;
 
 namespace EFCoreExtensions.DbToInMemory.Tests
 {
     [TestClass]
-    public class LinqFuncToSqlLangHelperTests
+    internal class LinqFuncToSqlLangHelperTests
     {
         [TestMethod]
         public void LINQ_Expression_should_be_translated_to_SQL()
