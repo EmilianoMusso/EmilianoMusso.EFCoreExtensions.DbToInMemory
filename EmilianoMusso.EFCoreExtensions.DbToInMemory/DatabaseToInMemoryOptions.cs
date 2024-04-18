@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
+namespace EFCoreExtensions.DbToInMemory
 {
     public class DatabaseToInMemoryOptions
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
+namespace EFCoreExtensions.DbToInMemory.Helpers
 {
     public static class LinqFuncToSqlLangHelper
     {
@@ -64,7 +64,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
 
         public static string ReplaceOperators(this string linqExpression)
         {
-            foreach(var op in Operators)
+            foreach (var op in Operators)
             {
                 var val = GetOperator(op.Key);
                 linqExpression = linqExpression.Replace(op.Key, val);
@@ -96,9 +96,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
             var linqExprSegments = linqWhereExpression.Split(separators, System.StringSplitOptions.RemoveEmptyEntries);
 
             if (linqExprSegments.Length == 0)
-            {
                 return "";
-            }
 
             var whereClause = WhereFunc;
 
@@ -112,17 +110,11 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers
                     linqExprSegments[i] = linqExprSegments[i].Replace("\'", "");
 
                     if (linqExprSegments[i - 1].Contains(LinqContains))
-                    {
                         linqExprSegments[i] = $"\'%{linqExprSegments[i]}%\'";
-                    }
                     else if (linqExprSegments[i - 1].Contains(LinqStartsWith))
-                    {
                         linqExprSegments[i] = $"\'{linqExprSegments[i]}%\'";
-                    }
                     else if (linqExprSegments[i - 1].Contains(LinqEndsWith))
-                    {
                         linqExprSegments[i] = $"\'%{linqExprSegments[i]}\'";
-                    }
                 }
 
                 linqExprSegments[i - 1] = linqExprSegments[i - 1].ReplaceKeywords();

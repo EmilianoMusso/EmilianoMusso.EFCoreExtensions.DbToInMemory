@@ -1,10 +1,10 @@
-# EmilianoMusso.EFCoreExtensions.DbToInMemory
+# EFCoreExtensions.DbToInMemory
 
 A library to easy load persisted data from database to [InMemory](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)
 
 **Usage**:
 
-Let's suppose we have a Sql Server instance named `MyInstance`, and a database named `MyDatabase`.
+Let's suppose we have a SQL Server instance named `MyInstance`, and a database named `MyDatabase`.
 The database contains tables, two of them named `MyTableType` and `AnotherTableType`. 
 We need to use already persisted data for our integration tests, without tampering the real data, but using it.
 

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31229.75
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmilianoMusso.EFCoreExtensions.DbToInMemory", "EmilianoMusso.EFCoreExtensions.DbToInMemory\EmilianoMusso.EFCoreExtensions.DbToInMemory.csproj", "{36BA8B77-9214-4985-BE63-98285CD737D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCoreExtensions.DbToInMemory", "EmilianoMusso.EFCoreExtensions.DbToInMemory\EFCoreExtensions.DbToInMemory.csproj", "{36BA8B77-9214-4985-BE63-98285CD737D2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{75CCC770-8DE7-4795-AB58-D58E8FBA9060}"
 	ProjectSection(SolutionItems) = preProject
@@ -13,7 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C70C5F26-A519-43B5-A170-70D8E292E264}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbToInMemoryTests", "DbToInMemoryTests\DbToInMemoryTests.csproj", "{B01C6697-79FE-4E20-ABCC-BEE813872C73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCoreExtensions.DbToInMemory.Tests", "DbToInMemoryTests\EFCoreExtensions.DbToInMemory.Tests.csproj", "{B01C6697-79FE-4E20-ABCC-BEE813872C73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

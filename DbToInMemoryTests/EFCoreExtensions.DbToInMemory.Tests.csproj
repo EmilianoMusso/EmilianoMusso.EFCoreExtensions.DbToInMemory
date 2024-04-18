@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EmilianoMusso.EFCoreExtensions.DbToInMemory\EmilianoMusso.EFCoreExtensions.DbToInMemory.csproj" />
+    <ProjectReference Include="..\EmilianoMusso.EFCoreExtensions.DbToInMemory\EFCoreExtensions.DbToInMemory.csproj" />
   </ItemGroup>
 
 </Project>

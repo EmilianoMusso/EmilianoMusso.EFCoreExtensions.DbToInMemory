@@ -2,11 +2,12 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
-using EmilianoMusso.EFCoreExtensions.DbToInMemory.Helpers;
+using System.Threading.Tasks;
+using EFCoreExtensions.DbToInMemory.Helpers;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
+namespace EFCoreExtensions.DbToInMemory.Extensions
 {
     public static class DatabaseToInMemoryExtensions
     {
@@ -18,7 +19,10 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
             var query = new StringBuilder("SELECT")
                 .AppendLine();
 
-            if (options.TopRecords > 0) query.AppendLine($"TOP({options.TopRecords})");
+            if (options.TopRecords > 0)
+            {
+                query.AppendLine($"TOP({options.TopRecords})");
+            }
 
             query.AppendLine(string.Join(", ", mapping.GetProperties().Select(x => $"[{x.Name}]")))
                  .Append("FROM ")
@@ -26,11 +30,14 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
 
             if (filter != null)
             {
-                var whereClause = LinqFuncToSqlLangHelper.GetSQLWhereClause(filter.ToString());
+                var whereClause = filter.ToString().GetSQLWhereClause();
                 query.AppendLine(whereClause);
             }
 
-            if (options.HasRandomOrder) query.AppendLine("ORDER BY NEWID()");
+            if (options.HasRandomOrder)
+            {
+                query.AppendLine("ORDER BY NEWID()");
+            }
 
             return query.ToString();
         }
@@ -41,7 +48,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
             dr.GetValues(values);
 
             var obj = new T();
-            for(var i = 0; i < values.Length; i++)
+            for (var i = 0; i < values.Length; i++)
             {
                 var propertyName = dr.GetName(i);
                 obj.GetType().GetProperty(propertyName).SetValue(obj, values[i]);
@@ -61,19 +68,73 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory.Extensions
                 HasRandomOrder = randomOrder
             };
 
-            var query = GetSelectQuery(options, filter);
+            InternalLoadTable(context, options, filter);
+        }
 
+        public static void InternalLoadTable<T>(this DbContext context, DatabaseToInMemoryOptions options, Expression<Func<T, bool>> filter) where T : class, new()
+        {
+            var query = GetSelectQuery(options, filter);
+            ExecuteSQLReader<T>(context, options.ConnectionString, query);
+        }
+
+        public static async Task InternalLoadTableAsync<T>(this DbContext context, string connectionString, int topRecords, bool randomOrder, Expression<Func<T, bool>> filter) where T : class, new()
+        {
+            var options = new DatabaseToInMemoryOptions()
+            {
+                ConnectionString = connectionString,
+                Context = context,
+                TableName = typeof(T).ToString(),
+                TopRecords = topRecords,
+                HasRandomOrder = randomOrder
+            };
+
+            await InternalLoadTableAsync(context, options, filter);
+        }
+
+        public static async Task InternalLoadTableAsync<T>(this DbContext context, DatabaseToInMemoryOptions options, Expression<Func<T, bool>> filter) where T : class, new()
+        {
+            var query = GetSelectQuery(options, filter);
+            await ExecuteSQLReaderAsync<T>(context, options.ConnectionString, query);
+        }
+
+        private static void ExecuteSQLReader<T>(DbContext context, string connectionString, string query) where T : class, new()
+        {
             try
             {
-                using var connection = new SqlConnection(options.ConnectionString);
+                using var connection = new SqlConnection(connectionString);
                 connection.Open();
 
-                var sqlCmd = new SqlCommand(query, connection);
+                using var sqlCmd = new SqlCommand(query, connection);
 
                 using var dr = sqlCmd.ExecuteReader();
                 if (dr.HasRows)
                 {
                     while (dr.Read())
+                    {
+                        var obj = CreateObject<T>(dr);
+                        context.Set<T>().Add(obj);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new LoadDataException(ex.Message, query);
+            }
+        }
+
+        private static async Task ExecuteSQLReaderAsync<T>(DbContext context, string connectionString, string query) where T : class, new()
+        {
+            try
+            {
+                await using var connection = new SqlConnection(connectionString);
+                await connection.OpenAsync();
+
+                await using var sqlCmd = new SqlCommand(query, connection);
+
+                await using var dr = await sqlCmd.ExecuteReaderAsync();
+                if (dr.HasRows)
+                {
+                    while (await dr.ReadAsync())
                     {
                         var obj = CreateObject<T>(dr);
                         context.Set<T>().Add(obj);

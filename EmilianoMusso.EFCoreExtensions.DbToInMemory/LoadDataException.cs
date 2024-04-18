@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
+namespace EFCoreExtensions.DbToInMemory
 {
     public class LoadDataException : Exception
     {
@@ -10,7 +10,7 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
 
         public LoadDataException(string message, string executedQuery) : base(message)
         {
-            this.ExecutedQuery = executedQuery;
+            ExecutedQuery = executedQuery;
         }
 
         public LoadDataException(string message) : base(message)
@@ -23,8 +23,8 @@ namespace EmilianoMusso.EFCoreExtensions.DbToInMemory
 
         public override string ToString()
         {
-            var sb = new StringBuilder(this.ToString())
-                .AppendLine(this.ExecutedQuery);
+            var sb = new StringBuilder(ToString())
+                .AppendLine(ExecutedQuery);
 
             return sb.ToString();
         }
